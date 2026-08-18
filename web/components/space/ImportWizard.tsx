@@ -21,6 +21,7 @@ import {
   isFileSystemAccessSupported,
   parseSessions,
   pickAndScan,
+  scanErrorCode,
   selectionUnit,
   SOURCE_LABEL,
   type AgentScope,
@@ -93,7 +94,7 @@ export default function ImportWizard({
         setPhase("intro");
         return;
       }
-      setErrorCode(err instanceof ImportScanError ? err.code : "generic");
+      setErrorCode(scanErrorCode(err));
       setPhase("error");
     }
   }, []);
@@ -197,7 +198,7 @@ export default function ImportWizard({
               icon={<FolderOpen className="h-5 w-5" />}
               title={t("No conversations found")}
               subtitle={t(
-                "This folder has no readable chat history. Pick your .claude or .codex folder.",
+                "This folder has no chat history in it. Pick the .claude or .codex folder in your home directory (Windows: C:\\Users\\<you>\\.claude) — not a project's local one.",
               )}
             />
           ) : (
@@ -259,7 +260,7 @@ function IntroView() {
         <div className="min-w-0 space-y-1">
           <p className="text-[13px] leading-relaxed text-[var(--foreground)]">
             {t(
-              "Select your local .claude or .codex folder. DeepTutor reads it right here in your browser — nothing leaves your machine until you choose what to import.",
+              "Select the .claude or .codex folder in your home directory (macOS/Linux: ~/.claude, Windows: C:\\Users\\<you>\\.claude). DeepTutor reads it right here in your browser — nothing leaves your machine until you choose what to import.",
             )}
           </p>
           <p className="text-[12px] leading-relaxed text-[var(--muted-foreground)]">
@@ -367,7 +368,11 @@ function ErrorView({ code }: { code: ImportScanErrorCode | "generic" }) {
         ? t(
             "Your browser doesn't support folder access. Please use a Chromium-based browser.",
           )
-        : t("Something went wrong while importing. Please try again.");
+        : code === "permission_denied"
+          ? t(
+              "DeepTutor wasn't allowed to read that folder. Pick it again and grant read access when the browser asks.",
+            )
+          : t("Something went wrong while importing. Please try again.");
   return (
     <CenteredStatus
       icon={

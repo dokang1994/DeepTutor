@@ -46,3 +46,23 @@ export function projectLabel(cwd: string): string {
   const parts = cwd.split("/").filter(Boolean);
   return parts.length ? parts[parts.length - 1] : cwd || "(unknown)";
 }
+
+/**
+ * Open a child directory, returning `null` when it simply isn't there.
+ *
+ * A `.claude` folder without `projects/` (e.g. a project-local one holding only
+ * settings and skills) is an empty import, not a failure — the wizard has a
+ * "no conversations found" state for exactly that. Permission and other
+ * failures still propagate so they can be surfaced as real errors.
+ */
+export async function optionalDirectory(
+  root: FileSystemDirectoryHandle,
+  name: string,
+): Promise<FileSystemDirectoryHandle | null> {
+  try {
+    return await root.getDirectoryHandle(name);
+  } catch (err) {
+    if ((err as { name?: string } | null)?.name === "NotFoundError") return null;
+    throw err;
+  }
+}

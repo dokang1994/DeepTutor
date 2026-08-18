@@ -13,6 +13,7 @@ import { projectLabel } from "./shared";
 import {
   type AgentScope,
   ImportScanError,
+  type ImportScanErrorCode,
   type ImportSource,
   type NormalizedSession,
   type ScanResult,
@@ -29,6 +30,22 @@ export function isFileSystemAccessSupported(): boolean {
     typeof window !== "undefined" &&
     typeof window.showDirectoryPicker === "function"
   );
+}
+
+/**
+ * Classify a scan failure into a code the wizard can explain. Anything the
+ * browser throws that isn't an `ImportScanError` would otherwise collapse into
+ * a single "something went wrong", so read denials are pulled out by name.
+ */
+export function scanErrorCode(
+  err: unknown,
+): ImportScanErrorCode | "generic" {
+  if (err instanceof ImportScanError) return err.code;
+  const name = (err as { name?: string } | null)?.name;
+  if (name === "NotAllowedError" || name === "SecurityError") {
+    return "permission_denied";
+  }
+  return "generic";
 }
 
 /** Open the OS folder picker, then scan the chosen directory. */

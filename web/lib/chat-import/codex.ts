@@ -13,6 +13,7 @@ import {
   deriveTitle,
   epochMsToISODate,
   isoToEpochSeconds,
+  optionalDirectory,
   projectLabel,
 } from "./shared";
 import type {
@@ -93,7 +94,9 @@ async function walkJsonl(
 export async function scanCodex(
   root: FileSystemDirectoryHandle,
 ): Promise<ProjectGroup[]> {
-  const sessionsDir = await root.getDirectoryHandle("sessions");
+  // Same as `scanClaude`: no `sessions/` means nothing to import, not a crash.
+  const sessionsDir = await optionalDirectory(root, "sessions");
+  if (!sessionsDir) return [];
   const files: CodexFile[] = [];
   await walkJsonl(sessionsDir, files);
 

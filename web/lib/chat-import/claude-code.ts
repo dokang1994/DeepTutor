@@ -12,6 +12,7 @@ import {
   deriveTitle,
   epochMsToISODate,
   isoToEpochSeconds,
+  optionalDirectory,
   projectLabel,
 } from "./shared";
 import type {
@@ -77,7 +78,10 @@ function toMessage(rec: ClaudeRecord): NormalizedMessage | null {
 export async function scanClaude(
   root: FileSystemDirectoryHandle,
 ): Promise<ProjectGroup[]> {
-  const projectsDir = await root.getDirectoryHandle("projects");
+  // A `.claude` folder with no `projects/` holds no chat history at all — a
+  // project-local one, say. That is an empty import, not an error.
+  const projectsDir = await optionalDirectory(root, "projects");
+  if (!projectsDir) return [];
   const groups: ProjectGroup[] = [];
 
   for await (const entry of projectsDir.values()) {
